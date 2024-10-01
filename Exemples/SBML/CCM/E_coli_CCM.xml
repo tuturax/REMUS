@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level2/version3" level="2" version="3">
+  <model name="E_coli_CCM">
+    <notes>
+      <body xmlns="http://www.w3.org/1999/xhtml">
+        <p>Network model E_coli_CCM written by the Matlab Metabolic Network Package</p>
+      </body>
+    </notes>
+    <listOfCompartments>
+      <compartment id="compartment" name="compartment" size="1"/>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="_S_Malate" name="_S_Malate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite _S_Malate </body> </notes>
+    </species>
+      <species id="Acetyl_CoA" name="Acetyl_CoA" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite Acetyl_CoA </body> </notes>
+    </species>
+      <species id="Fumarate" name="Fumarate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite Fumarate </body> </notes>
+    </species>
+      <species id="cis_Aconitate" name="cis_Aconitate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite cis_Aconitate </body> </notes>
+    </species>
+      <species id="_6_Phospho_D_gluconate" name="_6_Phospho_D_gluconate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite _6_Phospho_D_gluconate </body> </notes>
+    </species>
+      <species id="Orthophosphate" name="Orthophosphate" initialAmount="0" compartment="compartment" boundaryCondition="true" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite Orthophosphate </body> </notes>
+    </species>
+      <species id="Pyruvate" name="Pyruvate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite Pyruvate </body> </notes>
+    </species>
+      <species id="NADPplus" name="NADPplus" initialAmount="0" compartment="compartment" boundaryCondition="true" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite NADPplus </body> </notes>
+    </species>
+      <species id="NADPH" name="NADPH" initialAmount="0" compartment="compartment" boundaryCondition="true" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite NADPH </body> </notes>
+    </species>
+      <species id="NADH" name="NADH" initialAmount="0" compartment="compartment" boundaryCondition="true" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite NADH </body> </notes>
+    </species>
+      <species id="NADplus" name="NADplus" initialAmount="0" compartment="compartment" boundaryCondition="true" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite NADplus </body> </notes>
+    </species>
+      <species id="ATP" name="ATP" initialAmount="0" compartment="compartment" boundaryCondition="true" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite ATP </body> </notes>
+    </species>
+      <species id="H2O" name="H2O" initialAmount="0" compartment="compartment" boundaryCondition="true" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite H2O </body> </notes>
+    </species>
+      <species id="_2_Oxoglutarate" name="_2_Oxoglutarate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite _2_Oxoglutarate </body> </notes>
+    </species>
+      <species id="Oxaloacetate" name="Oxaloacetate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite Oxaloacetate </body> </notes>
+    </species>
+      <species id="Ubiquinone" name="Ubiquinone" initialAmount="0" compartment="compartment" boundaryCondition="true" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite Ubiquinone </body> </notes>
+    </species>
+      <species id="D_Erythrose_4_phosphate" name="D_Erythrose_4_phosphate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite D_Erythrose_4_phosphate </body> </notes>
+    </species>
+      <species id="Ubiquinol" name="Ubiquinol" initialAmount="0" compartment="compartment" boundaryCondition="true" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite Ubiquinol </body> </notes>
+    </species>
+      <species id="ADP" name="ADP" initialAmount="0" compartment="compartment" boundaryCondition="true" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite ADP </body> </notes>
+    </species>
+      <species id="Isocitrate" name="Isocitrate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite Isocitrate </body> </notes>
+    </species>
+      <species id="D_Ribulose_5_phosphate" name="D_Ribulose_5_phosphate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite D_Ribulose_5_phosphate </body> </notes>
+    </species>
+      <species id="D_Xylulose_5_phosphate" name="D_Xylulose_5_phosphate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite D_Xylulose_5_phosphate </body> </notes>
+    </species>
+      <species id="D_Glucose_6_phosphate" name="D_Glucose_6_phosphate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite D_Glucose_6_phosphate </body> </notes>
+    </species>
+      <species id="_3_Phospho_D_glyceroyl_phosphate" name="_3_Phospho_D_glyceroyl_phosphate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite _3_Phospho_D_glyceroyl_phosphate </body> </notes>
+    </species>
+      <species id="CoA" name="CoA" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite CoA </body> </notes>
+    </species>
+      <species id="CO2" name="CO2" initialAmount="0" compartment="compartment" boundaryCondition="true" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite CO2 </body> </notes>
+    </species>
+      <species id="D_Ribose_5_phosphate" name="D_Ribose_5_phosphate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite D_Ribose_5_phosphate </body> </notes>
+    </species>
+      <species id="Glycerone_phosphate" name="Glycerone_phosphate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite Glycerone_phosphate </body> </notes>
+    </species>
+      <species id="D_Glucose" name="D_Glucose" initialAmount="0" compartment="compartment" boundaryCondition="true" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite D_Glucose </body> </notes>
+    </species>
+      <species id="D_Fructose_1_6_bisphosphate" name="D_Fructose_1_6_bisphosphate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite D_Fructose_1_6_bisphosphate </body> </notes>
+    </species>
+      <species id="D_Glyceraldehyde_3_phosphate" name="D_Glyceraldehyde_3_phosphate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite D_Glyceraldehyde_3_phosphate </body> </notes>
+    </species>
+      <species id="Phosphoenolpyruvate" name="Phosphoenolpyruvate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite Phosphoenolpyruvate </body> </notes>
+    </species>
+      <species id="Citrate" name="Citrate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite Citrate </body> </notes>
+    </species>
+      <species id="Succinyl_CoA" name="Succinyl_CoA" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite Succinyl_CoA </body> </notes>
+    </species>
+      <species id="_3_Phospho_D_glycerate" name="_3_Phospho_D_glycerate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite _3_Phospho_D_glycerate </body> </notes>
+    </species>
+      <species id="D_Glucono_1_5_lactone_6_phosphate" name="D_Glucono_1_5_lactone_6_phosphate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite D_Glucono_1_5_lactone_6_phosphate </body> </notes>
+    </species>
+      <species id="D_Fructose_6_phosphate" name="D_Fructose_6_phosphate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite D_Fructose_6_phosphate </body> </notes>
+    </species>
+      <species id="_2_Phospho_D_glycerate" name="_2_Phospho_D_glycerate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite _2_Phospho_D_glycerate </body> </notes>
+    </species>
+      <species id="Succinate" name="Succinate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite Succinate </body> </notes>
+    </species>
+      <species id="Sedoheptulose_7_phosphate" name="Sedoheptulose_7_phosphate" initialAmount="0" compartment="compartment" boundaryCondition="false" >
+      <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> Metabolite Sedoheptulose_7_phosphate </body> </notes>
+    </species>
+    </listOfSpecies>
+    <listOfReactions>
+      <reaction id="PTS_RPTSsy" name="PTS_RPTSsy" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="D_Glucose" stoichiometry="1"/>
+          <speciesReference species="Phosphoenolpyruvate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="Pyruvate" stoichiometry="1"/>
+          <speciesReference species="D_Glucose_6_phosphate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="PGI_R02740" name="PGI_R02740" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="D_Glucose_6_phosphate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="D_Fructose_6_phosphate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="PFK_R04779" name="PFK_R04779" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="ATP" stoichiometry="1"/>
+          <speciesReference species="D_Fructose_6_phosphate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="ADP" stoichiometry="1"/>
+          <speciesReference species="D_Fructose_1_6_bisphosphate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="ALD_R01070" name="ALD_R01070" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="D_Fructose_1_6_bisphosphate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="Glycerone_phosphate" stoichiometry="1"/>
+          <speciesReference species="D_Glyceraldehyde_3_phosphate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="TIM_R01015" name="TIM_R01015" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="Glycerone_phosphate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="D_Glyceraldehyde_3_phosphate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="GAP_R01061" name="GAP_R01061" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="Orthophosphate" stoichiometry="1"/>
+          <speciesReference species="NADplus" stoichiometry="1"/>
+          <speciesReference species="D_Glyceraldehyde_3_phosphate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="NADH" stoichiometry="1"/>
+          <speciesReference species="_3_Phospho_D_glyceroyl_phosphate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="PGK_R01512" name="PGK_R01512" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="ADP" stoichiometry="1"/>
+          <speciesReference species="_3_Phospho_D_glyceroyl_phosphate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="ATP" stoichiometry="1"/>
+          <speciesReference species="_3_Phospho_D_glycerate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="PGM_R01518" name="PGM_R01518" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="_3_Phospho_D_glycerate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="_2_Phospho_D_glycerate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="PGH_R00658" name="PGH_R00658" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="_2_Phospho_D_glycerate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="Phosphoenolpyruvate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="PYK_R00200" name="PYK_R00200" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="ADP" stoichiometry="1"/>
+          <speciesReference species="Phosphoenolpyruvate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="Pyruvate" stoichiometry="1"/>
+          <speciesReference species="ATP" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="PDH_R00209" name="PDH_R00209" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="Pyruvate" stoichiometry="1"/>
+          <speciesReference species="NADplus" stoichiometry="1"/>
+          <speciesReference species="CoA" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="Acetyl_CoA" stoichiometry="1"/>
+          <speciesReference species="NADH" stoichiometry="1"/>
+          <speciesReference species="CO2" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="ZWF_R00835" name="ZWF_R00835" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="NADPplus" stoichiometry="1"/>
+          <speciesReference species="D_Glucose_6_phosphate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="NADPH" stoichiometry="1"/>
+          <speciesReference species="D_Glucono_1_5_lactone_6_phosphate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="GLH_R02035" name="GLH_R02035" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="D_Glucono_1_5_lactone_6_phosphate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="_6_Phospho_D_gluconate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="PGD_R01528" name="PGD_R01528" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="_6_Phospho_D_gluconate" stoichiometry="1"/>
+          <speciesReference species="NADPplus" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="NADPH" stoichiometry="1"/>
+          <speciesReference species="D_Ribulose_5_phosphate" stoichiometry="1"/>
+          <speciesReference species="CO2" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="RPI_R01056" name="RPI_R01056" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="D_Ribulose_5_phosphate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="D_Ribose_5_phosphate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="RPE_R01529" name="RPE_R01529" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="D_Ribulose_5_phosphate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="D_Xylulose_5_phosphate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="TXT_R01641" name="TXT_R01641" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="D_Xylulose_5_phosphate" stoichiometry="1"/>
+          <speciesReference species="D_Ribose_5_phosphate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="D_Glyceraldehyde_3_phosphate" stoichiometry="1"/>
+          <speciesReference species="Sedoheptulose_7_phosphate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="TAL_R08575" name="TAL_R08575" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="D_Glyceraldehyde_3_phosphate" stoichiometry="1"/>
+          <speciesReference species="Sedoheptulose_7_phosphate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="D_Erythrose_4_phosphate" stoichiometry="1"/>
+          <speciesReference species="D_Fructose_6_phosphate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="TXT_R01067" name="TXT_R01067" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="D_Erythrose_4_phosphate" stoichiometry="1"/>
+          <speciesReference species="D_Xylulose_5_phosphate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="D_Glyceraldehyde_3_phosphate" stoichiometry="1"/>
+          <speciesReference species="D_Fructose_6_phosphate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="CSN_R00351" name="CSN_R00351" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="Acetyl_CoA" stoichiometry="1"/>
+          <speciesReference species="Oxaloacetate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="CoA" stoichiometry="1"/>
+          <speciesReference species="Citrate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="ACN_R01325" name="ACN_R01325" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="Citrate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="cis_Aconitate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="ACN_R01900" name="ACN_R01900" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="cis_Aconitate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="Isocitrate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="ICD_R00709" name="ICD_R00709" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="NADplus" stoichiometry="1"/>
+          <speciesReference species="Isocitrate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="NADH" stoichiometry="1"/>
+          <speciesReference species="_2_Oxoglutarate" stoichiometry="1"/>
+          <speciesReference species="CO2" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="KGD_R08549" name="KGD_R08549" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="NADplus" stoichiometry="1"/>
+          <speciesReference species="_2_Oxoglutarate" stoichiometry="1"/>
+          <speciesReference species="CoA" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="NADH" stoichiometry="1"/>
+          <speciesReference species="CO2" stoichiometry="1"/>
+          <speciesReference species="Succinyl_CoA" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="SCS_R00405" name="SCS_R00405" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="Orthophosphate" stoichiometry="1"/>
+          <speciesReference species="ADP" stoichiometry="1"/>
+          <speciesReference species="Succinyl_CoA" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="ATP" stoichiometry="1"/>
+          <speciesReference species="CoA" stoichiometry="1"/>
+          <speciesReference species="Succinate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="SDH_R02164" name="SDH_R02164" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="Ubiquinone" stoichiometry="1"/>
+          <speciesReference species="Succinate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="Fumarate" stoichiometry="1"/>
+          <speciesReference species="Ubiquinol" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="FUM_R01082" name="FUM_R01082" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="Fumarate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="_S_Malate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="MDH_R00342" name="MDH_R00342" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="_S_Malate" stoichiometry="1"/>
+          <speciesReference species="NADplus" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="NADH" stoichiometry="1"/>
+          <speciesReference species="Oxaloacetate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="PPC_R00345" name="PPC_R00345" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="Orthophosphate" stoichiometry="1"/>
+          <speciesReference species="Oxaloacetate" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="CO2" stoichiometry="1"/>
+          <speciesReference species="Phosphoenolpyruvate" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="Overflow" name="Overflow" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="Acetyl_CoA" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="CoA" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="OxAConsumption" name="OxAConsumption" reversible="true">
+        <notes>  <body xmlns="http://www.w3.org/1999/xhtml"> uc::  
+
+ </body> </notes>
+        <listOfReactants>
+          <speciesReference species="Oxaloacetate" stoichiometry="1"/>
+        </listOfReactants>
+      </reaction>
+    </listOfReactions>
+  </model>
+</sbml>
