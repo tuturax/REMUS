@@ -1,7 +1,7 @@
 """
-Created on Tue Sep 26 08:26:49 2023
+Created on Tuesday Oct 22 2024
 
-Script for the creation of metabolic network and study of transmition of information throught it.
+Script for the creation of metabolic network model and study of transmition of information throught it.
 
 @author: tuturax (Arthur Lequertier)
 INRAE, MaIAGE
@@ -23,8 +23,6 @@ import random
 import pandas as pd
 import time
 
-# Model module
-import libsbml
 
 # Graphic interface
 import tkinter as tk
@@ -38,14 +36,15 @@ from matplotlib.pyplot import xticks
 from matplotlib.patches import Patch
 
 # Importation of the module of the sub-Class
-from layer_1.reactions import Reaction_class
-from layer_1.metabolites import Metabolite_class
-from layer_1.parameters import Parameter_class
-from layer_1.elasticities import Elasticity_class
-from layer_1.enzymes import Enzymes_class
-from layer_1.regulation import Regulation_class
-from layer_1.operon import Operon_class
-from layer_1.sampling import Sampling_class
+from .layer_1.reactions import Reaction_class
+from .layer_1.metabolites import Metabolite_class
+from .layer_1.parameters import Parameter_class
+from .layer_1.elasticities import Elasticity_class
+from .layer_1.enzymes import Enzymes_class
+from .layer_1.regulation import Regulation_class
+from .layer_1.operon import Operon_class
+from .layer_1.sampling import Sampling_class
+from .layer_1.MOO import MOO_class
 
 
 
@@ -82,8 +81,12 @@ class MODEL:
         self.__regulations = Regulation_class(self)
         # Call of operon Class
         self.__operons = Operon_class(self)
-        # Call of th esampling Class
+        # Call of the sampling Class
         self.__sampling = Sampling_class(self)
+        # Call of the MOO Class
+        self.__MOO = MOO_class(self)
+        
+
 
         ################################
         #  Initialisation of few variables of the model
@@ -99,8 +102,6 @@ class MODEL:
         self.default_Escher = None
         self.default_JSON = None
 
-        # real data of the model
-        self.real_data = {"Flux": pd.DataFrame(columns=["Flux"]), "Concentration" : pd.DataFrame(columns=["Correlation"]), "Correlation" : pd.DataFrame()}
 
         # Frequency of the system
         self.__frequency_omega = 0.0
@@ -110,6 +111,9 @@ class MODEL:
 
         # Growth rate coeff
         self.lambda_gr = 0.0
+
+        # Ration for the study of joint element
+        self.__ratio = pd.DataFrame(columns=["Numerator", "Denominator"])
 
         # Cache of the Network
         self.__cache_Link_matrix = None
@@ -230,6 +234,12 @@ class MODEL:
     @property
     def sampling(self):
         return self.__sampling
+    
+    @property
+    def MOO(self):
+        return self.__MOO
+
+
 
     @property
     def Link_matrix(self):
@@ -273,7 +283,9 @@ class MODEL:
 
 
 
-
+    @property
+    def ratio(self):
+        return(self.__ratio)
 
 
 
@@ -328,6 +340,7 @@ class MODEL:
             E_s = csr_matrix(self.elasticity.s.df.to_numpy(dtype="float64"))
             n = Nr.shape[0]
             Id = identity(n, format='csr')
+
 
             self.__cache_Jacobian = Nr.dot(E_s).dot(L) - self.lambda_gr * Id
 
@@ -388,10 +401,16 @@ class MODEL:
             self.__cache_R = None
             
             E_p = self.elasticity.p.df.copy().to_numpy(dtype="float64")
+            
+            try:
+                # We try to resolve the problem
+                L_link = np.linalg.solve(self.__Jacobian, self.Link_matrix[1])
+            except np.linalg.LinAlgError:
+                # If the matrix is singular 
+                L_link = np.linalg.lstsq(self.__Jacobian, self.Link_matrix[1], rcond=None)[0]
 
             C = -np.dot(
-                self.Link_matrix[0], 
-                np.linalg.solve(self.__Jacobian , self.Link_matrix[1])
+                self.Link_matrix[0], L_link
                         )
             
             R_s_p = np.dot(C, E_p)
@@ -540,12 +559,42 @@ class MODEL:
 
         return(R_normalized)
 
+    @property
+    def R_augmented(self):
+
+        # Creation of a identity matrix
+        Id_matrix = np.eye(self.R.shape[0])
+
+        # Creation of a list that will contain the added rows
+        augmented_rows = []
+        
+        # Then for each ratio that the user added to this dataframe
+        for idx, row in self.ratio.iterrows() :
+            # We add a row to this almost identity matrix
+            new_row = np.zeros(self.R.shape[0]) 
+
+            # If it is in the "Numerator" column, we add a 1 coeff
+            for num in [row['Numerator']]:
+                if num in self.R.index:
+                    new_row[self.R.index.get_loc(num)] = 1
+            # If it is in the "Denominator" column, we add a -1 coeff
+            for denom in [row['Denominator']]:
+                if denom in self.R.index:
+                    new_row[self.R.index.get_loc(denom)] = -1
+            
+            augmented_rows.append(new_row)
+
+        augmented_matrix = pd.DataFrame(np.vstack([Id_matrix] + augmented_rows),index=list(self.R.index) + list(self.ratio.index), columns=self.R.index)
+
+        R_augmented = augmented_matrix.dot(self.R)     
+
+        return(R_augmented)
 
 
     #########################################
     # Standard deviation of parameters vector
     @property
-    def __Standard_deviations(self):
+    def Standard_deviations(self):
         return self.parameters.df["Standard deviation"]
 
     ###################
@@ -557,17 +606,13 @@ class MODEL:
         # If the cache is empty, we recompute the cov matrix and atribute the result to the cache value
 
         if self.__cache_cov is None:
-            # First we reset the value of the correlation
+            # First we reset the value of the correlation # Just in case it wasn't
             self.__cache_rho = None
-            # Second, we get the response matrix as a local variable to avoid a call of function everytime.
-            R = self.__R
 
-            # We creat a identity matrix to represent the covariance matrix of the parameters
-            covariance_dp = np.identity(len(self.__Standard_deviations))
-
-            
-            # We create a dataframe that represent this matrix for an easier manipulation for the case of the operons
-            df_cov_dp = pd.DataFrame(covariance_dp, index=self.parameters.df.index, columns=self.parameters.df.index)
+            # We create a dataframe that represent the Cov matrix of parameters for an easier manipulation for the case of the operons
+            df_cov_dp =  pd.DataFrame(np.diag(self.Standard_deviations**2), 
+                                        index=self.Standard_deviations.index, 
+                                        columns=self.Standard_deviations.index)
             
             # Then we set the value of the covariance matrix of the parameters depending to the operons 
             for operon in self.operons.df.index:
@@ -579,11 +624,16 @@ class MODEL:
                             if enzyme_1 != enzyme_2 :
                                 df_cov_dp.at[enzyme_1+"_para", enzyme_2+"_para"] = df_cov_dp.at[enzyme_2+"_para", enzyme_1+"_para"] = new_value
 
-            # Then we attribute the real value of the variance of the parameters stored in the parameters dataframe
-            for parameter in self.parameters.df.index:
-                df_cov_dp.at[parameter,parameter] = self.parameters.df.at[parameter, "Standard deviation"] ** 2
-            
+
+
             covariance_dp = df_cov_dp.to_numpy()
+
+            # We get the response matrix as a local variable to avoid a call of function everytime.
+            if True :
+                R = self.R_augmented.to_numpy()
+            else :
+                R = self.__R
+
             matrix_RC = np.dot(R, covariance_dp)
 
             Cov = np.block(
@@ -593,7 +643,7 @@ class MODEL:
                 ]
             )
 
-            self.__cache_cov = Cov
+            self.__cache_cov = np.asarray(Cov, dtype=np.float64)
 
         self.__computation_time["Covariance"] =  time.time() - t_0
 
@@ -603,14 +653,19 @@ class MODEL:
     @property  # Displayed
     def covariance(self):
         # R as a local variable to avoid many call
-        index = self.R.columns.to_list() + self.R.index.to_list()
+        index = self.R_augmented.columns.to_list() + self.R_augmented.index.to_list()
         # Return the dataframe of the covariance matrix by a call of it
         return pd.DataFrame(
             self.__covariance,
             index= index,
             columns= index
             )
-
+    
+    ###################
+    # Variance matrix
+    @property
+    def variance(self):
+        return(pd.DataFrame({"Variance": self.covariance.values.diagonal()}, index = self.covariance.index))
 
     ###########################
     # Correlation
@@ -629,7 +684,7 @@ class MODEL:
                         v[i] = 0
                 v_matrix = np.diag(v)
                      
-                rho = np.dot(v_matrix,np.dot(self.__covariance,v_matrix))
+                rho = np.dot(v_matrix, np.dot(self.__covariance, v_matrix)  )
 
             else : 
                 for i in range(rho.shape[0]):
@@ -643,6 +698,7 @@ class MODEL:
 
                         rho[i][j] = rho_value
             
+
             self.__cache_rho = np.clip(rho, -1, 1)
 
         return self.__cache_rho
@@ -667,12 +723,14 @@ class MODEL:
         if self.__cache_MI is None:
             
             # We need a tolerance because there is a numerical error due to the inverse of the square in the correlation part
-            tolerance = 1e-10
-
-            correlation_squared = self.__correlation ** 2
+            epsilon = 1e-10 
+            
             # Clipping to be sure that the correlation stay in the intervale [0, 1)
-            adjusted_correlation = np.clip(1 - correlation_squared, tolerance, None)
-            MI = np.where(np.abs(self.__correlation) >= 1 - tolerance, 
+            adjusted_correlation = np.clip(1 - self.__correlation**2, epsilon, 1.)
+
+
+            # If the value of the correlation if close to 1 or -1, we set the MI to inf, else it is the real value
+            MI = np.where(np.abs(self.__correlation) >= 1 - epsilon, 
                         np.inf, 
                         -0.5 * np.log(adjusted_correlation))
             
@@ -868,6 +926,7 @@ class MODEL:
             if new_df.shape == self.__N.shape :
                 self.__Stoichio_matrix_pd = new_df
             # Else we update the model
+
             else :
                 # First we remove all the previous reactions
                 for reaction in self.reactions.df :
@@ -906,6 +965,7 @@ class MODEL:
         Fonction to update the dataframes after atribuated a new values to the stoichio matrix
         """
         if self.activate_update :
+
             self.metabolites.__init__(self)
             self.reactions.__init__(self)
             # Deal with the metabolites
@@ -934,6 +994,7 @@ class MODEL:
             # We update the elasticities matrix based on the new stoichiometric matrix
             self._update_elasticity()
 
+
     #################################################################################
     ############     Function to the elaticities matrix of the model     ############
         
@@ -955,34 +1016,35 @@ class MODEL:
                 if self.metabolites.df.at[meta, "External"] == False :
                     meta_int.append(meta)
 
-
+            # We look for the metabolite that isn't in the model
             missing_meta = [meta for meta in meta_int if meta not in self.elasticity.s.df.columns]
+
             if missing_meta:
-                # Créer un DataFrame temporaire avec des colonnes manquantes, toutes remplies de 0
-                df_temp = pd.DataFrame(0, index=self.elasticity.s.df.index, columns=missing_meta)
+                # Creation of temporary DataFrame of the missing columns, filled with 0
+                df_temp = pd.DataFrame(0., index=self.elasticity.s.df.index, columns=missing_meta, dtype="float64")
                 
-                # Concaténer les colonnes manquantes au DataFrame original
-                self.elasticity.s.df = pd.concat([self.elasticity.s.df, df_temp], axis=1)
-            
+                # Concatenation of this dataframe of the missing column with the current DataFrame
+                self.elasticity.s.thermo = pd.concat([self.elasticity.s.thermo, df_temp], axis=1)
+                self.elasticity.s.enzyme = pd.concat([self.elasticity.s.enzyme, df_temp], axis=1)
+                self.elasticity.s.regulation = pd.concat([self.elasticity.s.regulation, df_temp], axis=1)
+
             # For every metabolite of the E_s elasticity matrix :
             for meta in self.elasticity.s.df.columns:
                 # If the metabolite isn't in the stoichio matrix => we remove it from the E_s elasticity matrix
                 if meta not in self.N_without_ext.index:
-                    self.elasticity.s.df.drop(columns=meta, inplace=True)
+                    self.elasticity.s.thermo.drop(columns=meta, inplace=True)
+                    self.elasticity.s.enzyme.drop(columns=meta, inplace=True)
+                    self.elasticity.s.regulation.drop(columns=meta, inplace=True)
 
             # Special case when there is no reaction
             # Pandas doesn't allow to add line before at least 1 column is add
             if self.elasticity.s.df.columns.size != 0:
                 for reaction in self.reactions.df.index:
                     if reaction not in self.elasticity.s.df.index:
-                        self.elasticity.s.df.loc[reaction] = [0 for i in self.elasticity.s.df.columns]
+                        self.elasticity.s.thermo.loc[reaction] = [0. for i in self.elasticity.s.df.columns]
+                        self.elasticity.s.enzyme.loc[reaction] = [0. for i in self.elasticity.s.df.columns]
+                        self.elasticity.s.regulation.loc[reaction] = [0. for i in self.elasticity.s.df.columns]
 
-            # Reset of the thermodynamic sub-matrix of the E_s elasticity matrix
-            colonnes = self.elasticity.s.df.columns
-            index = self.elasticity.s.df.index
-            self.elasticity.s.thermo = pd.DataFrame(0, columns=colonnes, index=index)
-            self.elasticity.s.enzyme = pd.DataFrame(0, columns=colonnes, index=index)
-            self.elasticity.s.regulation = pd.DataFrame(0, columns=colonnes, index=index)
 
             
 
@@ -1679,7 +1741,7 @@ class MODEL:
 
     #############################################################################
     ###################   Function plot the MI matrix   #########################
-    def plot(self, result="MI", title="", label=False, value_in_cell=False, index_to_keep=[]):
+    def plot(self, result="MI", title="", label=False, value_in_cell=False, index_to_keep=[], size_scale=1.0, max_value_display=False):
         """
         Fonction to plot a heatmap of the mutual information
 
@@ -1718,8 +1780,9 @@ class MODEL:
         data_frame = data_frame.loc[index_to_keep_bis, index_to_keep_bis]
         matrix = data_frame.to_numpy(dtype="float64")
         
-
-        fig, ax = plt.subplots(figsize=(12, 6))
+        figesize = (12,6)
+        figesize = tuple(x * size_scale for x in figesize)
+        fig, ax = plt.subplots(figsize=figesize)
 
         if result == "mi":
 
@@ -1746,7 +1809,12 @@ class MODEL:
             else : 
                 epsilon = np.nanmin(matrix_with_nan)
                 matrix_with_nan = np.where(np.isnan(matrix_with_nan), epsilon, matrix_with_nan)
-                im = plt.imshow(matrix_with_nan, cmap=custom_map, norm=matplotlib.colors.LogNorm(vmin=epsilon, vmax=np.nanmax(matrix_with_nan)))
+                if max_value_display == False :
+                    maxi = np.nanmax(matrix_with_nan)
+                else :
+                    maxi = max_value_display
+
+                im = plt.imshow(matrix_with_nan, cmap=custom_map, norm=matplotlib.colors.LogNorm(vmin=epsilon, vmax=maxi))
             
             # Definitionof the color for the Nan and the values out of bound
             im.cmap.set_bad(color='white')  # 0 in white
@@ -1768,15 +1836,18 @@ class MODEL:
 
         elif result == "rho":
             custom_map = matplotlib.colors.LinearSegmentedColormap.from_list("custom", ["red", "white", "blue"])
-
-            im = plt.imshow(matrix, cmap=custom_map, vmin=-1, vmax=1)
+            if max_value_display == False :
+                max_value_display = 1
+            im = plt.imshow(matrix, cmap=custom_map, vmin=-max_value_display, vmax=max_value_display)
 
         elif result == "cov":
             custom_map = matplotlib.colors.LinearSegmentedColormap.from_list("custom", ["red", "white", "blue"])
             
             # Set the max of the scale
-            max_abs = np.max(np.abs(matrix))
-            #max_abs = 1.7
+            if max_value_display == False :
+                max_abs = np.max(np.abs(matrix))
+            else :
+                max_abs = max_value_display
 
             # Set to 0 the value under the thershold
             threshold = 1e-10
@@ -1789,7 +1860,8 @@ class MODEL:
             ax.set_xticks(np.arange(len(data_frame.index)), labels=data_frame.index)
             ax.set_yticks(np.arange(len(data_frame.index)), labels=data_frame.index)
 
-            plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+            plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor", fontsize=10 * size_scale)
+            plt.setp(ax.get_yticklabels(), fontsize=10 * size_scale)
 
         # Display the value of each cell
         if value_in_cell == True:
@@ -1811,7 +1883,7 @@ class MODEL:
                 title = "Correlation"
 
         # Title of the plot
-        ax.set_title(title)
+        ax.set_title(title, fontsize=14 * size_scale)
         fig.tight_layout()
 
         # Plot of the black line to separate the parameters from the variables
@@ -1863,7 +1935,7 @@ class MODEL:
         data_frame = data_frame.loc[focused]
 
         if studied in ("internal") :
-            data_frame = data_frame[self.N_without_ext.index]
+            data_frame = data_frame[self.N_without_ext.index] 
 
 
         matrix=data_frame.to_numpy()
@@ -1887,7 +1959,7 @@ class MODEL:
 
         # Paramétrage des labels et des ticks
         ax1.set_xlabel('Studied')
-        ax1.set_ylabel('Values')
+        ax1.set_ylabel('Mutual Information')
         ax1.set_title('')
         ax1.set_xticks(x + bar_width / 2)
         ax1.set_xticklabels(column_labels, rotation=90, ha="center")
@@ -2794,118 +2866,9 @@ class MODEL:
     #                                                                              #
     ################################################################################
 
-    def set_real_data(self, rho_matrix = None) :
-        ### Description of the fonction
-        """
-        Fonction to create fake real data 
-        """
-        for key in self.real_data.keys() :
-            if key == "Flux" :
-                self.real_data[key] = pd.DataFrame(index=self.reactions.df.index)
-                self.real_data[key]["Flux"] = self.reactions.df["Flux"]
 
-                error = np.random.uniform(-0.1, 0.1, len(self.reactions.df.index))
-                for i,reaction in enumerate(self.reactions.df.index) :
-                    self.real_data[key].at[reaction, "Flux"] = self.real_data[key].at[reaction, "Flux"] + error[i]
-
-            elif key == "Concentration" :
-                self.real_data[key] = pd.DataFrame(index=self.metabolites.df.index)
-                self.real_data[key]["Concentration"] = self.metabolites.df["Concentration"]
-
-                error = np.random.uniform(-0.1, 0.1, len(self.metabolites.df.index))
-                for i,reaction in enumerate(self.metabolites.df.index) :
-                    self.real_data[key].at[reaction, "Concentration"] = self.real_data[key].at[reaction, "Concentration"] + error[i]
-
-
-            elif key == "Correlation" :
-                self.real_data[key] = self.correlation.copy()
-
-
-
-                if rho_matrix is not None :
-                    self.real_data[key].values[:] = rho_matrix
-
-                else :
-                    a = np.random.uniform(-1.0, 1.0, size=self.covariance.shape)
-                    b = np.dot(a, a.T)
-
-                
-                    for i in range(len(self.parameters.df.index)) :
-                        for j in range(len(self.parameters.df.index)) :
-                            b[i][j] = 0
-
-                    for i in range(b.shape[0]) :
-                        b[i][i] = 1
-
-                    self.real_data[key].values[:] = b
-                
-
-
-    def fitness(self, a=1) :
-
-        diff_rho = self.__correlation - self.real_data["Correlation"]
-        
-        norm = np.linalg.norm(diff_rho, ord=2)
-
-        fitness = np.power(norm-0.5, 2)*a  
-        # a*(x-0.5)²
-        return(fitness)
-                
-            
-    def similarity(self, only_Cov = True) :
-        
-        diff_rho = self.__correlation - self.real_data["Correlation"]
-
-        # L1 is more sensible to the global difference
-        norm_L1 = np.abs(diff_rho).sum().sum()  
-        # L2 is more usefull to focus on magnitude of difference
-        norm_L2 = np.sqrt((diff_rho**2).sum().sum())  
-
-        sim_cov = norm_L2
-
-
-
-        if only_Cov : 
-
-            return sim_cov
-
-        else : 
-            sim_react = np.linalg.norm( self.real_data["Flux"]['Flux'].values - self.reactions.df['Flux'].values )
-
-            sim_meta = np.linalg.norm( self.real_data["Concentration"]['Concentration'].values - self.metabolites.df['Concentration'].values )
-            
-            sim_tot = sim_react + sim_meta + sim_cov
-
-            return sim_tot
-
-
-    #def MOO(self, modified_elasticity, elasticity_value, print_result=False) :
-        #from MOO import main
-
-        main(self, modified_elasticity, elasticity_value, print_result)
         
 
-    #################################################################################
-    ############    Function that return the Mutual Inforamtion matrix   ############
-    def objective(self, variable1: str, variable2: str):
-        ### Description of the fonction
-        """
-        Fonction to return an objective function that represent the difference between 
-
-        variable1, variable2 : string of the name of the variable that we want to compute the mutual information
-
-        """
-        Cov_df = self.covariance
-
-        MI = (1 / (2 * np.log(2))) * np.log(
-            Cov_df.at[variable1, variable1]
-            * Cov_df.at[variable2, variable2]
-            / (
-                Cov_df.at[variable1, variable1] * Cov_df.at[variable2, variable2]
-                - Cov_df.at[variable1, variable2] * Cov_df.at[variable2, variable1]
-            )
-        )
-        return MI
 
 
 
@@ -2921,7 +2884,7 @@ class MODEL:
 
     #############################################################################
     ###############  Function to creat a simple linear network ##################
-    def creat_linear(self, n: int):
+    def creat_linear(self, n: int, grec=True):
         ### Description of the fonction
         """
         Fonction to create a linear system of n metabolite
@@ -2936,6 +2899,8 @@ class MODEL:
             raise TypeError("Please enter an integer >= 2 !\n")
 
         else:
+            import string 
+            list_alphabet = list(string.ascii_uppercase)
             # reinitialisation of the data
             self.__init__()
 
@@ -2948,20 +2913,80 @@ class MODEL:
                     elif i - 1 == j:
                         matrix[i][j] = 1
 
-            noms_lignes = [f"meta_{i}" for i in range(n)]
-            noms_colonnes = [f"reaction_{i}" for i in range(n - 1)]
-
+            noms_lignes = [list_alphabet[i] for i in range(n)]
+            if grec :
+                noms_colonnes = [r"$\nu$"+str(i) for i in range(n - 1)]
+            else :
+                noms_colonnes = [f"v_{i}" for i in range(n - 1)]
             # Attribution of the new stoichiometic matrix
+
             self.Stoichio_matrix_pd = pd.DataFrame(matrix, index=noms_lignes, columns=noms_colonnes)
 
-            self.metabolites.df.loc[f"meta_{0}", "External"] = True
-            self.metabolites.df.loc[f"meta_{n-1}", "External"] = True
+            self.metabolites.df.loc[list_alphabet[0], "External"] = True
+            self.metabolites.df.loc[list_alphabet[n-1], "External"] = True
 
             for reaction in self.Stoichio_matrix_pd.columns:
                 self.elasticity.p.df.at[reaction, "Temperature"] = 0
 
-
             self._update_elasticity()
+
+    #############################################################################
+    ###############  Function to creat a simple linear network ##################
+    def creat_branch(self, grec=True):
+        ### Description of the fonction
+        """
+        Fonction to create a 2 branch system
+        """
+        import string 
+        list_alphabet = list(string.ascii_uppercase)
+        # reinitialisation of the data
+        self.__init__()
+        
+        # 7 meetabolites
+        n = 7
+
+        # Matrix of 7 metabolite and 6 reactions
+        matrix = np.array([[0 for i in range(n - 1)] for k in range(n)])
+
+        # A
+        matrix[0][0] = -1
+        # B
+        matrix[1][0] = 1
+        matrix[1][1] = -1
+        # C
+        matrix[2][1] = 1
+        matrix[2][2] = -1
+        matrix[2][4] = -1
+        # D
+        matrix[3][2] = 1
+        matrix[3][3] = -1
+        # E
+        matrix[4][3] = 1
+        # F
+        matrix[5][4] = 1
+        matrix[5][5] = -1
+        # G
+        matrix[6][5] = 1
+
+
+        noms_lignes = [list_alphabet[i] for i in range(n)]
+        if grec :
+            noms_colonnes = [r"$\nu$"+str(i) for i in range(n - 1)]
+        else :
+            noms_colonnes = [f"v_{i}" for i in range(n - 1)]
+        # Attribution of the new stoichiometic matrix
+
+        self.Stoichio_matrix_pd = pd.DataFrame(matrix, index=noms_lignes, columns=noms_colonnes)
+
+        self.metabolites.df.loc[list_alphabet[0], "External"] = True
+        self.metabolites.df.loc[list_alphabet[n-3], "External"] = True
+        self.metabolites.df.loc[list_alphabet[n-1], "External"] = True
+
+        for reaction in self.Stoichio_matrix_pd.columns:
+            self.elasticity.p.df.at[reaction, "Temperature"] = 0
+
+        self._update_elasticity()
+
 
     #############################################################################
     ##################   Function to read a CSV/XLS file  #######################
@@ -3063,7 +3088,7 @@ class MODEL:
         ignor_error                 : bool
             to specify if you want to continue th reading process, even if there is an error in the SBML file
         """
-        
+        import libsbml
 
         # Reset of the model
         self.reset
@@ -3196,7 +3221,7 @@ class MODEL:
         creat_file_model     : bool 
             Possibility to creat a file with the model in a .XML file 
         """
-        #import libsbml
+        import libsbml
         def check(value, message):
             """If 'value' is None, prints an error message constructed using
             'message' and then exits with status code 1.  If 'value' is an integer,
@@ -3409,7 +3434,7 @@ class MODEL:
     ###################   Function to read a SBTab file  #########################
     def read_SBtab(
         self,
-        filepath = "../Exemples/SBtab/E Coli Core/Model.tsv"
+        filepath = "../Exemples/SBtab/E Coli Core/model.tsv"
     ):
         ### Description of the fonction
         """

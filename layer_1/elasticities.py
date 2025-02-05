@@ -10,8 +10,8 @@ if TYPE_CHECKING:
     from main import MODEL
 
 
-from layer_1.layer_2.elasticity_s import Sub_Elasticity_class
-from layer_1.layer_2.elasticity_p import Elasticity_p_class
+from .layer_2.elasticity_s import Sub_Elasticity_class
+from .layer_2.elasticity_p import Elasticity_p_class
 
 
 #####################

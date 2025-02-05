@@ -36,37 +36,6 @@ class Sampling_class:
     def len(self):
         return len(self.data)
 
-    #################################################################################
-    #########           Fonction to add a parameters                       ##########
-    def add(self, name: str, mean=1, Standard_deviation=1.0) -> None:
-        ### Description of the fonction
-        """
-        Fonction to add a parameter to the model\n
-            If it is already in the model, change the properties
-
-
-        Parameters
-        ----------
-
-        name                : str
-            Name of the parameter\n
-
-        mean                : float
-            Mean value of the parameter\n
-
-        Standard_deviation  : float
-            Standard deviation of the parameter
-
-        """
-
-        # Look if the parameter is already in the model
-        if name in self.df.index.to_list():
-            raise NameError('The parameter "' + name + '" is already in the model !')
-
-        # Else, the parameter is add to the model by an add to the DataFrame
-        else:
-            self.df.loc[name] = [mean, Standard_deviation]
-            self.__class_MODEL_instance._reset_value("E_p")
 
 
     #############################################################################
@@ -100,7 +69,7 @@ class Sampling_class:
 
 
         # Case where the elasticity p is sampled
-        if type_variable in ["elasticity_p", "elasticity_s"]:
+        if type_variable in {"elasticity_p", "elasticity_s", "elasticity_c", "e_s", "e_c", "e_p", }:
             # If the name is not a list in the case of the elasticity, it's bad
             if not isinstance(name, (list, tuple, set)) :
                 raise TypeError(
@@ -192,6 +161,14 @@ class Sampling_class:
         self.data.loc[index] = [name, type_variable, mean, SD, distribution]
 
 
+    #############################################################################
+    #################   Function clear sampling data    #########################
+    def clear_data(self):
+        ### Description of the fonction
+        """
+        Fonction remove every rows from the data dataframe
+        """
+        self.data.drop(self.data.index,inplace=True)
 
     #############################################################################
     ###################   Function sampled the model    #########################
@@ -223,17 +200,19 @@ class Sampling_class:
 
         # Internal function that define the random draw
         def value_rand(type_samp: str, mean: float, SD: float):
-            if type_samp.lower() == "uniform":
+            type_samp = type_samp.lower()
+            if type_samp == "uniform":
                 deviation = (9 * SD) ** 0.25
+                #print(f"{mean} ; {SD} ; {deviation}\n")
                 return np.random.uniform(mean - deviation, mean + deviation)
 
-            elif type_samp.lower() == "normal":
+            elif type_samp == "normal":
                 return np.random.normal(mean, SD)
 
-            elif type_samp.lower() == "lognormal":
+            elif type_samp == "lognormal":
                 return np.random.lognormal(mean, SD)
 
-            elif type_samp.lower() == "beta":
+            elif type_samp == "beta":
                 alpha = (((1 - mean) / ((np.sqrt(SD)) * (2 - mean) ** 2)) - 1) / (2 - mean)
                 beta = alpha * (1 - mean)
                 return np.random.beta(alpha, beta)
@@ -299,8 +278,8 @@ class Sampling_class:
                 # And we generate it's temporary value
                 rand_value = value_rand(
                             self.data.at[index, "Distribution"],
-                            self.data.at[index, "Standard deviation"],
                             self.data.at[index, "Mean"],
+                            self.data.at[index, "Standard deviation"],
                         )
                 
                 if Type_sampling in {"elasticity_p", "e_p"}:
@@ -541,12 +520,16 @@ class Sampling_class:
 
 
         # Créer un boxplot pour chaque colonne
-        plt.boxplot([data[col] for col in data.columns], labels=data.columns)
+        plt.boxplot([data[col] for col in data.columns], labels=data.columns, showfliers=False)
 
         # Ajouter des titres et des étiquettes
         plt.title('')
-        plt.xlabel('Elements')
-        plt.ylabel('Values')
+        if studied == "internal" :
+            plt.xlabel('Internal metabolites')
+        elif studied == "fluxes" :
+            plt.xlabel('Fluxes')
+        
+        plt.ylabel('Mutual Information')
 
         # Pivoter les labels de l'axe des x
         plt.xticks(rotation=80)
