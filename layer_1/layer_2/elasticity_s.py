@@ -7,7 +7,7 @@ import numpy as np
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from main import MODEL
+    from cell_model import MODEL
 #####################
 # Class Sub_Elasticities
 #####################
@@ -23,6 +23,8 @@ class Sub_Elasticity_class:
         self.enzyme = pd.DataFrame(dtype='float64')
         self.regulation = pd.DataFrame(dtype='float64')
 
+        self._cache_mask_irreversible = None
+
     #################################################################################
     #########           Return the Dataframe of the elasticity p           ##########
     def __repr__(self) -> str:
@@ -37,9 +39,32 @@ class Sub_Elasticity_class:
     #################################################################################
     #########        Setter to change the elasticities matrix              ##########
     # For the E_s matrix
+
+    # We create a mask matrix the erase the element of the elasticity that represent dependency of flux to products (in the case of irreversible reactions)
+    @property
+    def mask_irreversible(self):
+        # If the mask matrix isn't reset
+        if self._cache_mask_irreversible is None or (self._cache_mask_irreversible.shape != self.thermo.shape) :
+            # We create a new one full of 1
+            mask = self.thermo.copy()
+            mask.loc[:] = 1
+
+            for index, row in self.__class_MODEL_instance.reactions.df.iterrows():
+                if row["Reversible"] == False :
+                    for meta, stoichio_coeff in row["Metabolites"].items():
+                        if stoichio_coeff > 0 :
+                            if meta in mask.columns:
+                                mask.at[index, meta] = 0
+
+            self._cache_mask_irreversible = mask
+        
+        return(self._cache_mask_irreversible)
+
     @property
     def df(self):
-        df = self.thermo + self.enzyme + self.regulation
+        df = self.mask_irreversible*self.thermo 
+        + self.enzyme 
+        + self.regulation
         return df.astype('float64')
 
     @df.setter

@@ -2,11 +2,12 @@
 # Library
 #####################
 import pandas as pd
+import pint
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from main import MODEL
+    from cell_model import MODEL
 
 #####################
 # Class Metabolites
@@ -21,7 +22,12 @@ class Metabolite_class:
         # Private list to deal with the fact that a dataframe cannot be filled if there is no collumn in the dataframe
         self.__cache_meta = []
 
-        self.df = pd.DataFrame(columns=["External", "Concentration", "Unit"])
+        self.__unit = "mM"
+
+        
+        self.__ureg = self.__class_MODEL_instance.ureg
+
+        self.df = pd.DataFrame(columns=["External", "Concentration"])
 
     #################################################################################
     #########           Return the Dataframe of the metabolites            ##########
@@ -41,8 +47,42 @@ class Metabolite_class:
         return(list(self.df.index))
 
     #################################################################################
+    #########                    Gestion of the unit                       ##########
+    @property
+    def unit(self):
+        return(self.__ureg(self.__unit).units)
+    
+    @unit.setter
+    def unit(self, input_unit:str):
+        """ Change the unit of the concentration """
+        try:
+            # First we check if the input unit is a concentration
+            test_unit = 1 * self.__ureg(input_unit)
+            test_unit.to("mM")
+
+            # Conversion of concentration values if the Dataframe didn't have 0 metabolite
+            if not self.df.empty:
+                # Conversion de l'ancienne unité vers la nouvelle
+                old_unit = self.__ureg(self.__unit)
+                new_unit = self.__ureg(input_unit)
+
+                # We change the unit of every concentration
+                self.df["Concentration"] = self.df["Concentration"].astype(float).apply(
+                    lambda x: (x * old_unit).to(new_unit).magnitude
+                    )
+                
+            # Update of the unite
+            self.__unit = input_unit
+
+        except pint.UndefinedUnitError:            
+            raise ValueError(f"The input unit '{input_unit}' isn't valid, try 'M' or 'mol/L'")
+        except pint.DimensionalityError:
+            raise ValueError(f"The input unit '{input_unit}' isn't a concentration unit, try 'M' or 'mol/L'")
+
+
+    #################################################################################
     #########           Fonction to add a metabolite                         ##########
-    def add(self, name: str, external=False, concentration=1.0, unit = "mmol/gDW"):
+    def add(self, name: str, external=False, concentration=1.0, unit = "mM"):
         ### Description of the fonction
         """
         Fonction to add a metabolite to the model\n
@@ -66,7 +106,7 @@ class Metabolite_class:
         """
         # Look if the metabolite class was well intialised
         if type(self.df) != type(pd.DataFrame()):
-            self.df = pd.DataFrame(columns=["External", "Concentration", "Unit"])
+            self.df = pd.DataFrame(columns=["External", "Concentration"])
         
         elif not isinstance(external, bool) :
             raise TypeError(f"The input argument 'external' must be a bool, not a {type(external)}")
@@ -83,7 +123,7 @@ class Metabolite_class:
             if name in self.df.index :
                 self.change(name, external, concentration, unit)
             else : 
-                self.df.loc[name] = [external, concentration, unit]
+                self.df.loc[name] = [external, concentration]
 
                 # If there is no reaction in the columns of the soichio metric matrix, we keep in memeory the metabolite
                 if self.__class_MODEL_instance.Stoichio_matrix_pd.columns.size == 0:
@@ -146,8 +186,6 @@ class Metabolite_class:
                         f"The input variable '{concentration}' is a type '{type(concentration)}', a value is expected for the argument 'concentration' !"
                     )
             
-            if isinstance(unit, str) :
-                self.df.at[name, "Unit"] = unit
 
     #################################################################################
     #########           Fonction to remove a metabolite                    ##########
@@ -187,7 +225,7 @@ class Metabolite_class:
 
     #################################################################################
     #########           Fonction to update the meta dataframe              ##########
-    def _update(self, name=None, external=False, concentration=1, unit = "mmol/gDW"):
+    def _update(self, name=None, external=False, concentration=1, unit = "mM"):
         ### Description of the fonction
         """
         Internal function to update the metabolite dataframe after a change of the stoichiometric matrix
@@ -206,8 +244,8 @@ class Metabolite_class:
         """
         # Look if the metabolite class was well intialised
         if type(self.df) != type(pd.DataFrame()):
-            self.df = pd.DataFrame(columns=["External", "Concentration", "unit"])
+            self.df = pd.DataFrame(columns=["External", "Concentration"])
 
         # Look if the metabolite is already in the model
         if name not in self.df.index:
-            self.df.loc[name] = [external, concentration, unit]
+            self.df.loc[name] = [external, concentration]

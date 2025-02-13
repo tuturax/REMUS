@@ -1,5 +1,5 @@
 """
-Created on Tuesday Oct 22 2024
+Created on Feb 05 2025
 
 Script for the creation of metabolic network model and study of transmition of information throught it.
 
@@ -23,6 +23,8 @@ import random
 import pandas as pd
 import time
 
+# unit
+import pint
 
 # Graphic interface
 import tkinter as tk
@@ -36,15 +38,15 @@ from matplotlib.pyplot import xticks
 from matplotlib.patches import Patch
 
 # Importation of the module of the sub-Class
-from .layer_1.reactions import Reaction_class
-from .layer_1.metabolites import Metabolite_class
-from .layer_1.parameters import Parameter_class
-from .layer_1.elasticities import Elasticity_class
-from .layer_1.enzymes import Enzymes_class
-from .layer_1.regulation import Regulation_class
-from .layer_1.operon import Operon_class
-from .layer_1.sampling import Sampling_class
-from .layer_1.MOO import MOO_class
+from layer_1.reactions import Reaction_class
+from layer_1.metabolites import Metabolite_class
+from layer_1.parameters import Parameter_class
+from layer_1.elasticities import Elasticity_class
+from layer_1.enzymes import Enzymes_class
+from layer_1.regulation import Regulation_class
+from layer_1.operon import Operon_class
+from layer_1.sampling import Sampling_class
+from layer_1.MOO import MOO_class
 
 
 
@@ -62,6 +64,11 @@ class MODEL:
     #############################################################################
     #############             Initialisation                #####################
     def __init__(self):
+
+        # Load of the Unit Registery
+        self.__ureg = pint.UnitRegistry()
+        # Add of the gDW unit
+        self.__ureg.define("gDW = gram")
 
         ################################
         #  Call of the sub-Class and definition of private attribute
@@ -85,13 +92,11 @@ class MODEL:
         self.__sampling = Sampling_class(self)
         # Call of the MOO Class
         self.__MOO = MOO_class(self)
-        
-
 
         ################################
         #  Initialisation of few variables of the model
         ################################
-
+    
         # Initialisation of the stoichiometric matrix attribute
         self.__Stoichio_matrix_pd = pd.DataFrame()
         
@@ -150,6 +155,10 @@ class MODEL:
 
     #############################################################################
     ##################              Getter                  #####################
+    @property
+    def ureg(self):
+        return self.__ureg
+    
     @property
     def Stoichio_matrix_pd(self) -> pd.DataFrame :
         return self.__Stoichio_matrix_pd
@@ -274,7 +283,7 @@ class MODEL:
                 np.linalg.pinv(Nr.to_numpy(dtype="float64")),
             )
             # L.dtype = np.float64
-
+            L = np.round(L, decimals=10)
             self.__cache_Link_matrix = L
             self.__cache_Reduced_Stoichio_matrix = Nr
         
@@ -539,16 +548,16 @@ class MODEL:
         )
     
     @property
-    def R_normalized(self):
+    def R_scaled(self):
         # First we creat the vector of concentrations and fluxes
         df_c = self.metabolites.df[self.metabolites.df['External'] == False][['Concentration']].rename(columns={'Concentration': 'unified'})
         df_v = self.reactions.df[["Flux"]].rename(columns={'Flux': 'unified'})
 
         serie_unified = pd.concat([df_c, df_v])
-        serie_p = self.parameters.df[["Mean values"]]
+        serie_p = self.parameters.df[["Geometric Means"]]
 
         matrix_unified = np.linalg.inv(np.diag(serie_unified['unified'].values))
-        matrix_p = np.diag(serie_p['Mean values'].values)
+        matrix_p = np.diag(serie_p['Geometric Means'].values)
 
         df_unified = pd.DataFrame(matrix_unified, index=serie_unified.index, columns=serie_unified.index)
 
@@ -556,14 +565,24 @@ class MODEL:
 
         R_normalized = df_unified.dot(self.R.dot(df_p))
 
-
         return(R_normalized)
 
     @property
-    def R_augmented(self):
+    def R_scaled_augmented(self):
+
+        R = self.R_scaled
+
+        # We create the augmented response matrix without the response of parameters to themselves
+        R_augmented = np.block([[np.identity(R.shape[1])], 
+                                [R.to_numpy()]
+                                ])
+
+        R_augmented_df = pd.DataFrame(  R_augmented,
+                                        index=list(self.R.columns) + list(self.R.index), 
+                                        columns=self.R.columns)
 
         # Creation of a identity matrix
-        Id_matrix = np.eye(self.R.shape[0])
+        I_d = np.identity(R.shape[1] + R.shape[0])
 
         # Creation of a list that will contain the added rows
         augmented_rows = []
@@ -571,31 +590,36 @@ class MODEL:
         # Then for each ratio that the user added to this dataframe
         for idx, row in self.ratio.iterrows() :
             # We add a row to this almost identity matrix
-            new_row = np.zeros(self.R.shape[0]) 
+            new_row = np.zeros(I_d.shape[0]) 
 
             # If it is in the "Numerator" column, we add a 1 coeff
             for num in [row['Numerator']]:
-                if num in self.R.index:
-                    new_row[self.R.index.get_loc(num)] = 1
+                new_row[R_augmented_df.index.get_loc(num)] = 1
             # If it is in the "Denominator" column, we add a -1 coeff
             for denom in [row['Denominator']]:
-                if denom in self.R.index:
-                    new_row[self.R.index.get_loc(denom)] = -1
+                new_row[R_augmented_df.index.get_loc(denom)] = -1
             
             augmented_rows.append(new_row)
 
-        augmented_matrix = pd.DataFrame(np.vstack([Id_matrix] + augmented_rows),index=list(self.R.index) + list(self.ratio.index), columns=self.R.index)
+        # We add the new rows to the identity matrix
+        I_augmented = np.vstack([I_d] + augmented_rows)
 
-        R_augmented = augmented_matrix.dot(self.R)     
 
-        return(R_augmented)
+
+        R_augmented = np.dot(I_augmented, R_augmented)
+
+        R_augmented_df = pd.DataFrame(  R_augmented,
+                                        index=list(self.R.columns) + list(self.R.index) + list(self.ratio.index), 
+                                        columns=self.R.columns)
+
+        return(R_augmented_df)
 
 
     #########################################
     # Standard deviation of parameters vector
     @property
     def Standard_deviations(self):
-        return self.parameters.df["Standard deviation"]
+        return self.parameters.df["Geometric SD"]
 
     ###################
     # Covariance matrix
@@ -629,21 +653,13 @@ class MODEL:
             covariance_dp = df_cov_dp.to_numpy()
 
             # We get the response matrix as a local variable to avoid a call of function everytime.
-            if True :
-                R = self.R_augmented.to_numpy()
-            else :
-                R = self.__R
+            R = self.R_scaled_augmented.to_numpy()
 
-            matrix_RC = np.dot(R, covariance_dp)
-
-            Cov = np.block(
-                [
-                    [covariance_dp, np.dot(covariance_dp, np.conjugate(R.T))],
-                    [matrix_RC, np.dot(matrix_RC, np.conjugate(R.T))],
-                ]
-            )
+            Cov = np.dot(R, np.dot(covariance_dp, np.conjugate(R.T)))
 
             self.__cache_cov = np.asarray(Cov, dtype=np.float64)
+
+
 
         self.__computation_time["Covariance"] =  time.time() - t_0
 
@@ -653,7 +669,7 @@ class MODEL:
     @property  # Displayed
     def covariance(self):
         # R as a local variable to avoid many call
-        index = self.R_augmented.columns.to_list() + self.R_augmented.index.to_list()
+        index = self.R_scaled_augmented.index.to_list()
         # Return the dataframe of the covariance matrix by a call of it
         return pd.DataFrame(
             self.__covariance,
@@ -1385,7 +1401,7 @@ class MODEL:
             elif name in self.reactions.df.index:
                 return self.reactions.df.at[name, "Flux"]
             elif name in self.parameters.df.index:
-                return self.parameters.df.at[name, "Mean values"]
+                return self.parameters.df.at[name, "Geometric Means"]
             else:
                 raise NameError(
                     f"The input name '{name}' in the 'fixed_vector' argument is not in the metabolite, reactions or parameters dataframe !"
@@ -1576,7 +1592,7 @@ class MODEL:
             elif name in self.reactions.df.index:
                 return self.reactions.df.at[name, "Flux"]
             elif name in self.parameters.df.index:
-                return self.parameters.df.at[name, "Mean values"]
+                return self.parameters.df.at[name, "Geometric Means"]
             else:
                 raise NameError(
                     f"The input name '{name}' in the 'fixed_vector' argument is not in the metabolite, reactions or parameters dataframe !"
@@ -2284,7 +2300,7 @@ class MODEL:
         for para in list_para :
             R_para = self.R[[para]].values
 
-            matrix = self.parameters.df.at[para, "Standard deviation"]*np.dot(R_para, R_para.T)
+            matrix = self.parameters.df.at[para, "Geometric SD"]*np.dot(R_para, R_para.T)
 
             dict_para[para] = matrix
 
@@ -2457,7 +2473,7 @@ class MODEL:
             if normalized == False :
                 matrix = self.R
             else :
-                matrix = self.R_normalized
+                matrix = self.R_scaled
 
             # If the studied variable is in the index => its a flux or a metabolite concentration
             if studied in matrix.index :
@@ -2915,11 +2931,11 @@ class MODEL:
 
             noms_lignes = [list_alphabet[i] for i in range(n)]
             if grec :
-                noms_colonnes = [r"$\nu$"+str(i) for i in range(n - 1)]
+                noms_colonnes = [r"$\nu$"+str(i) for i in range(1, n)]
             else :
-                noms_colonnes = [f"v_{i}" for i in range(n - 1)]
+                noms_colonnes = [f"v_{i}" for i in range(1, n)]
+            
             # Attribution of the new stoichiometic matrix
-
             self.Stoichio_matrix_pd = pd.DataFrame(matrix, index=noms_lignes, columns=noms_colonnes)
 
             self.metabolites.df.loc[list_alphabet[0], "External"] = True
@@ -3304,9 +3320,9 @@ class MODEL:
             check(p,                                                            'create parameter ' + para)
             check(p.setId(para),                                                'set parameter '+para+' id')
             check(p.setConstant(True),                                          'set parameter '+para+' "constant"')
-            check(p.setValue(self.parameters.df.at[para, "Mean values"]),       'set parameter '+para+' value')
+            check(p.setValue(self.parameters.df.at[para, "Geometric Means"]),       'set parameter '+para+' value')
             check(p.setUnits('per_second'),                                     'set parameter '+para+' units')
-            note = "<body xmlns='http://www.w3.org/1999/xhtml'><p>SD:"+str(self.parameters.df.at[para,"Standard deviation"])+"</p></body>"
+            note = "<body xmlns='http://www.w3.org/1999/xhtml'><p>SD:"+str(self.parameters.df.at[para,"Geometric SD"])+"</p></body>"
             check(p.setNotes(note),                                         'set parameter '+para+' notes')
         
         # Create reactions inside this model, set the reactants and products,

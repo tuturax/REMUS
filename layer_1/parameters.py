@@ -6,7 +6,7 @@ import pandas as pd
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from main import MODEL
+    from cell_model import MODEL
 
 #####################
 # Class Parameters
@@ -19,10 +19,10 @@ class Parameter_class:
         self.__class_MODEL_instance = class_MODEL_instance
 
         self.df = pd.DataFrame(
-            index=["Temperature"], columns=["Mean values", "Standard deviation"]
+            index=["Temperature"], columns=["Geometric Means", "Geometric SD"]
         )
-        self.df.loc["Temperature", "Mean values"] = 273.15
-        self.df.loc["Temperature", "Standard deviation"] = 1.0
+        self.df.loc["Temperature", "Geometric Means"] = 273.15
+        self.df.loc["Temperature", "Geometric SD"] = 3.0
 
     #################################################################################
     #########           Return the Dataframe of the parameters             ##########
@@ -43,7 +43,7 @@ class Parameter_class:
 
     #################################################################################
     #########           Fonction to add a parameters                       ##########
-    def add(self, name: str, mean=1, Standard_deviation=1.0) -> None:
+    def add(self, name: str, mean=3., Standard_deviation=1.) -> None:
         ### Description of the fonction
         """
         Fonction to add a parameter to the model\n
@@ -99,12 +99,12 @@ class Parameter_class:
 
         else:
             if mean == None :
-                mean = self.df.at[name, "Mean values"]
+                mean = self.df.at[name, "Geometric Means"]
             if SD == None :
-                SD = self.df.at[name, "Standard deviation"]
+                SD = self.df.at[name, "Geometric SD"]
 
-            self.df.at[name, "Mean values"] = mean
-            self.df.at[name, "Standard deviation"] = SD
+            self.df.at[name, "Geometric Means"] = mean
+            self.df.at[name, "Geometric SD"] = SD
 
 
             self.__class_MODEL_instance._reset_value(session="var")

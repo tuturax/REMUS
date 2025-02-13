@@ -6,7 +6,7 @@ import pandas as pd
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from main import MODEL
+    from cell_model import MODEL
 
 
 #####################
@@ -105,8 +105,9 @@ class Enzymes_class:
         """
         Fonction to add an parameter-enzyme to every reaction of the model
         """
-        for reaction in self.__class_MODEL_instance.reactions.df.index:
-            name_enzyme = "enzyme_" + reaction
-            # Look if the enzyme is already in the model
-            if name_enzyme not in self.df.index.to_list():
-                self.add(name_enzyme, 1, [reaction], "parameter")
+        for reaction, row in self.__class_MODEL_instance.reactions.df.iterrows():
+            if row["Enzymatic"]:
+                name_enzyme = "enzyme_" + reaction
+                # Look if the enzyme is already in the model
+                if name_enzyme not in self.df.index.to_list():
+                    self.add(name_enzyme, 1, [reaction], "parameter")
